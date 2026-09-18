@@ -1,0 +1,105 @@
+{
+  "version": "1.0",
+  "description": "Deterministic rule taxonomy for intent classification and risk scoring. Every rule has a stable rule_id so a flagged interaction can always be traced back to the exact rule(s) that fired (full audit lineage). Edit weights/keywords here to change governance behaviour; no retraining or code deploy required.",
+
+  "base_categories": [
+    {
+      "rule_id": "CAT-COMPLAINT",
+      "category": "Formal Complaint",
+      "compliance_mandate": "FCA DISP / Consumer Duty",
+      "base_weight": 50,
+      "keywords": [
+        "formal complaint",
+        "financial ombudsman",
+        "take this further",
+        "unacceptable service",
+        "escalate to management"
+      ]
+    },
+    {
+      "rule_id": "CAT-VULNERABLE",
+      "category": "Vulnerable / Hardship",
+      "compliance_mandate": "FCA Consumer Duty (FG21/1)",
+      "base_weight": 40,
+      "keywords": [
+        "lost my job",
+        "cannot afford",
+        "can't afford",
+        "terminal illness",
+        "bereavement",
+        "pensioner",
+        "severe financial hardship",
+        "hospital"
+      ]
+    },
+    {
+      "rule_id": "CAT-DSAR",
+      "category": "DSAR / Data Privacy",
+      "compliance_mandate": "UK GDPR / ICO Mandate",
+      "base_weight": 35,
+      "keywords": [
+        "delete my data",
+        "subject access request",
+        "gdpr breach",
+        "right to be forgotten",
+        "privacy complaint"
+      ]
+    },
+    {
+      "rule_id": "CAT-BILLING",
+      "category": "Billing & Direct Debit",
+      "compliance_mandate": "Payment Services Directive",
+      "base_weight": 20,
+      "keywords": [
+        "direct debit failed",
+        "overcharged",
+        "unauthorized charge",
+        "unauthorised charge",
+        "refund request",
+        "incorrect invoice"
+      ]
+    }
+  ],
+
+  "fallback_category": {
+    "rule_id": "CAT-GENERAL",
+    "category": "General Enquiry",
+    "compliance_mandate": "N/A",
+    "base_weight": 0
+  },
+
+  "modifiers": [
+    {
+      "rule_id": "MOD-REGULATOR",
+      "name": "Regulator Threat Modifier",
+      "keywords": ["fca", "ombudsman", "sra", "legal action"],
+      "score_adjustment": 30
+    },
+    {
+      "rule_id": "MOD-CANCEL",
+      "name": "Immediate Cancellation Demand",
+      "keywords": ["cancel my account immediately", "terminate contract"],
+      "score_adjustment": 20
+    },
+    {
+      "rule_id": "MOD-REPEAT",
+      "name": "Repeat Escalation Flag",
+      "keywords": [],
+      "condition": "customer has more than 2 flagged (Medium/High) interactions within any rolling 7-day window",
+      "score_adjustment": 15,
+      "applied_in": "post-load pass (src/apply_repeat_escalation.py) once all interactions for a customer are loaded"
+    },
+    {
+      "rule_id": "MOD-SENTIMENT",
+      "name": "Negative Sentiment Keywords",
+      "keywords": ["disgusted", "appalled", "scam", "fraud"],
+      "score_adjustment": 10
+    }
+  ],
+
+  "risk_tiers": [
+    {"tier": "Low", "min_score": 0, "max_score": 30, "flag_status": "Automated Pass", "priority": "Priority 3 (None)", "sla_hours": null},
+    {"tier": "Medium", "min_score": 31, "max_score": 60, "flag_status": "Sample Audit", "priority": "Priority 2 (48 Hours)", "sla_hours": 48},
+    {"tier": "High", "min_score": 61, "max_score": null, "flag_status": "Immediate Flag", "priority": "Priority 1 (< 2 Hours)", "sla_hours": 2}
+  ]
+}

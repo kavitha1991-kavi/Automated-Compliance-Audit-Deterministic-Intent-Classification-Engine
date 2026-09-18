@@ -1,0 +1,9 @@
+pandas>=2.1
+SQLAlchemy>=2.0
+pytest>=7.4
+pytest-cov>=4.1
+streamlit>=1.30
+
+# Optional - only needed if DATABASE_URL points at PostgreSQL 15+ instead
+# of the default local SQLite file.
+# psycopg2-binary>=2.9

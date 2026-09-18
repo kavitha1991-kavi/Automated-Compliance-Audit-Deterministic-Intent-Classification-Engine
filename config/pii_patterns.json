@@ -1,0 +1,41 @@
+{
+  "version": "1.0",
+  "description": "UK GDPR / ICO data-minimisation regex patterns. Order matters: more specific patterns (NI number, card, phone) must run before broader ones (postcode) to avoid a NI number or phone number being partially re-caught by a looser rule. Update this file to add/adjust patterns; no code changes or redeploys are required.",
+  "patterns": [
+    {
+      "entity_type": "NI_NUMBER",
+      "pattern": "\\b[A-Za-z]{2}\\s*\\d{2}\\s*\\d{2}\\s*\\d{2}\\s*[A-Da-d]\\b",
+      "flags": "",
+      "mask_token": "[REDACTED_NI_NUMBER]",
+      "description": "UK National Insurance Number, e.g. QQ123456C. Deliberately broader than the strict HMRC letter set (which excludes D,F,I,Q,U,V) so that the department's own worked example, QQ123456C - the standard HMRC-documented placeholder NINO used precisely because it can never be a real one - is still caught. A stricter pattern would silently miss it. Given the brief's 0% PII-leakage target, over-masking an unlikely two-letter/six-digit/suffix-letter coincidence is the safe direction; under-masking a real NINO is not. See README Design Decisions."
+    },
+    {
+      "entity_type": "CARD_NUMBER",
+      "pattern": "\\b(?:\\d[ -]?){13,19}\\b",
+      "flags": "",
+      "mask_token": "[REDACTED_CARD]",
+      "description": "Credit/debit card number, 13-19 digits (covers the standard 13-16 digit range plus longer schemes some debit/prepaid cards use), optionally space/hyphen separated. Widened from the brief's literal {13,16} bound after SQL-11 (the PII assurance check) caught real 19-digit card numbers in the sample data slipping through entirely: with a trailing \\b anchor, a quantifier capped at 16 can never match a token that is actually longer than 16, because the match has to end exactly at the token's true end for \\b to hold. See README Design Decisions."
+    },
+    {
+      "entity_type": "PHONE",
+      "pattern": "(?:\\+44\\s?\\(0\\)\\s?\\d{2,4}|\\+44\\s?\\d{2,4}|\\(?0\\d{2,4}\\)?)[\\s-]?\\d{3,4}[\\s-]?\\d{3,4}",
+      "flags": "",
+      "mask_token": "[REDACTED_PHONE]",
+      "description": "UK landline/mobile in national or +44 international format"
+    },
+    {
+      "entity_type": "EMAIL",
+      "pattern": "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}",
+      "flags": "",
+      "mask_token": "[REDACTED_EMAIL]",
+      "description": "Email address"
+    },
+    {
+      "entity_type": "POSTCODE",
+      "pattern": "\\b[A-Z]{1,2}\\d[A-Z\\d]?\\s*\\d[A-Z]{2}\\b",
+      "flags": "IGNORECASE",
+      "mask_token": "[REDACTED_POSTCODE]",
+      "description": "UK postcode, e.g. SW1A 1AA. Run last: without the NI/phone/card patterns running first, this would also swallow fragments of those entities."
+    }
+  ]
+}
